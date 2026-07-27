@@ -1,6 +1,10 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import upload, course, chat, quiz, progress, search
+
 
 app = FastAPI(
     title="EduForge API",

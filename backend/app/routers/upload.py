@@ -21,7 +21,7 @@ async def upload_pdf(
     
     supabase = get_supabase_client()
     result = supabase.table("courses").insert({
-        "user_id": user.id,
+        "user_id": user["id"],
         "filename": file.filename,
         "extracted_text": text,
         "status": "uploaded"
