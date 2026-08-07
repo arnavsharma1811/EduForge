@@ -5,9 +5,10 @@ import { GlassCard } from "@/components/ui/glass-card"
 import { GlassInput } from "@/components/ui/glass-input"
 import { GlassButton } from "@/components/ui/glass-button"
 import { GlassChip } from "@/components/ui/glass-chip"
-import { Send, ArrowLeft, Bot, User } from "lucide-react"
+import { Send, ArrowLeft, Bot, User, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { apiClient } from "@/lib/apiClient"
 
 type Message = {
   id: string
@@ -24,6 +25,7 @@ const suggestedPrompts = [
 
 export default function ChatbotPage() {
   const params = useParams()
+  const courseId = params.id as string
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -33,6 +35,7 @@ export default function ChatbotPage() {
   ])
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -43,7 +46,7 @@ export default function ChatbotPage() {
     scrollToBottom()
   }, [messages, isTyping])
 
-  const handleSend = (text: string = input) => {
+  const handleSend = async (text: string = input) => {
     if (!text.trim()) return
 
     // Add user message
@@ -51,23 +54,28 @@ export default function ChatbotPage() {
     setMessages(prev => [...prev, userMsg])
     setInput("")
     setIsTyping(true)
+    setError(null)
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const result = await apiClient.sendChatMessage(courseId, text)
       const aiMsg: Message = { 
         id: (Date.now() + 1).toString(), 
         role: "ai", 
-        content: `I'd be happy to help with that. Based on the course material, ${text.toLowerCase().includes('summarize') ? 'this chapter covers the foundational principles of the topic, emphasizing the importance of core concepts before moving to advanced applications.' : 'here is an explanation of that concept...'}`
+        content: result.response 
       }
       setMessages(prev => [...prev, aiMsg])
+    } catch (err: any) {
+      setError(err.message || "Failed to get a response from the AI tutor.")
+      // Optional: pop the user message off if it failed, or just show error
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] relative max-w-5xl mx-auto w-full p-4 md:p-6">
       <div className="flex items-center gap-4 mb-6">
-        <Link href={`/course/${params.id}`}>
+        <Link href={`/course/${courseId}`}>
           <button className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-white hover:bg-white/10 transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -94,7 +102,7 @@ export default function ChatbotPage() {
                 {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
               </div>
               
-              <div className={`p-4 rounded-2xl text-sm ${
+              <div className={`p-4 rounded-2xl text-sm whitespace-pre-wrap ${
                 msg.role === 'user'
                   ? 'bg-white/10 text-white rounded-tr-sm border border-white/5'
                   : 'bg-primary/10 text-white/90 rounded-tl-sm border border-primary/20 backdrop-blur-md shadow-[0_0_15px_rgba(99,102,241,0.1)]'
@@ -114,6 +122,12 @@ export default function ChatbotPage() {
                 <span className="h-2 w-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.2s' }} />
                 <span className="h-2 w-2 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.4s' }} />
               </div>
+            </div>
+          )}
+          {error && (
+            <div className="flex items-center gap-2 text-red-400 bg-red-500/10 p-3 rounded-lg mx-auto max-w-sm mt-4">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span className="text-xs">{error}</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -145,6 +159,7 @@ export default function ChatbotPage() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask a question about the course..." 
               className="flex-1 pr-12 rounded-full h-12 bg-white/5 border-white/10"
+              disabled={isTyping}
             />
             <button 
               type="submit"

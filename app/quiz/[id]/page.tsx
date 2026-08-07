@@ -1,52 +1,51 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { GlassButton } from "@/components/ui/glass-button"
-import { ArrowLeft, CheckCircle2, XCircle, Trophy } from "lucide-react"
+import { ArrowLeft, CheckCircle2, XCircle, Trophy, Loader2, AlertCircle } from "lucide-react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
+import { apiClient } from "@/lib/apiClient"
 
 type Question = {
-  id: number
-  text: string
+  question: string
   options: string[]
-  correctAnswer: number
+  correct_answer: string
   explanation: string
 }
 
-const quizData: Question[] = [
-  {
-    id: 1,
-    text: "What is the primary foundation of modern architecture according to the first principle discussed in the module?",
-    options: [
-      "Scalability at all costs",
-      "Solid understanding of the basics",
-      "Using the latest frameworks",
-      "Optimizing for microservices from day one"
-    ],
-    correctAnswer: 1,
-    explanation: "The module explicitly states that without a solid understanding of the basics, advanced techniques will inevitably fail under pressure."
-  },
-  {
-    id: 2,
-    text: "Which of the following is NOT listed as a core principle?",
-    options: [
-      "Designing for scalability and performance",
-      "Maintainability in large codebases",
-      "Maximizing third-party dependencies",
-      "The foundation of modern architecture"
-    ],
-    correctAnswer: 2,
-    explanation: "Maximizing third-party dependencies is not one of the core principles. In fact, relying too heavily on them can negatively impact maintainability."
-  }
-]
-
 export default function QuizPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
+  const courseId = params.id as string
+  const chapterIndexStr = searchParams.get("chapter") || "0"
+  const chapterIndex = parseInt(chapterIndexStr, 10)
+
+  const [quizData, setQuizData] = useState<Question[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
+
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      try {
+        const data = await apiClient.generateQuiz(courseId, chapterIndex)
+        if (data.questions && data.questions.length > 0) {
+          setQuizData(data.questions)
+        } else {
+          setError("AI returned an empty quiz.")
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to generate quiz.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchQuiz()
+  }, [courseId, chapterIndex])
 
   const handleSelect = (optionIndex: number) => {
     if (isSubmitted) return
@@ -70,20 +69,44 @@ export default function QuizPage() {
     }
   }
 
-  const score = Object.entries(selectedAnswers).reduce((acc, [qIndex, answer]) => {
-    return acc + (quizData[parseInt(qIndex)].correctAnswer === answer ? 1 : 0)
+  const score = Object.entries(selectedAnswers).reduce((acc, [qIndex, answerIndex]) => {
+    const q = quizData[parseInt(qIndex)]
+    const isCorrect = q.options[answerIndex] === q.correct_answer
+    return acc + (isCorrect ? 1 : 0)
   }, 0)
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <h2 className="text-xl text-white font-medium">Generating Quiz...</h2>
+        <p className="text-muted-foreground mt-2">Our AI is crafting questions based on this chapter.</p>
+      </div>
+    )
+  }
+
+  if (error || quizData.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-2" />
+        <p className="text-red-400 max-w-md">{error || "Failed to load quiz."}</p>
+        <Link href={`/course/${courseId}`}>
+          <GlassButton>Return to Course</GlassButton>
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 p-4 md:p-8 max-w-4xl mx-auto w-full flex flex-col">
       <div className="flex items-center gap-4 mb-8">
-        <Link href={`/course/${params.id}`}>
+        <Link href={`/course/${courseId}`}>
           <button className="h-10 w-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-white hover:bg-white/10 transition-colors">
             <ArrowLeft className="h-5 w-5" />
           </button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-white">Module 1 Knowledge Check</h1>
+          <h1 className="text-2xl font-bold text-white">Chapter {chapterIndex + 1} Knowledge Check</h1>
           <p className="text-sm text-muted-foreground">Test your understanding of the core concepts</p>
         </div>
       </div>
@@ -103,7 +126,7 @@ export default function QuizPage() {
               Question {currentQuestion + 1} of {quizData.length}
             </span>
             <h2 className="text-xl md:text-2xl font-medium text-white leading-relaxed">
-              {quizData[currentQuestion].text}
+              {quizData[currentQuestion].question}
             </h2>
           </div>
 
@@ -173,21 +196,15 @@ export default function QuizPage() {
               <Link href={`/course/${params.id}`}>
                 <GlassButton variant="secondary">Return to Course</GlassButton>
               </Link>
-              <GlassButton onClick={() => {
-                setIsSubmitted(false)
-                setCurrentQuestion(0)
-                setSelectedAnswers({})
-              }}>
-                Retake Quiz
-              </GlassButton>
             </div>
           </GlassCard>
 
           <div className="w-full max-w-2xl space-y-6">
             <h3 className="text-xl font-bold text-white px-2">Review Answers</h3>
             {quizData.map((q, i) => {
-              const userAnswer = selectedAnswers[i]
-              const isCorrect = userAnswer === q.correctAnswer
+              const userAnswerIndex = selectedAnswers[i]
+              const userAnswer = q.options[userAnswerIndex]
+              const isCorrect = userAnswer === q.correct_answer
               
               return (
                 <GlassCard key={i} className={`p-6 border-l-4 ${isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
@@ -198,20 +215,20 @@ export default function QuizPage() {
                       <XCircle className="h-6 w-6 text-red-500 shrink-0 mt-0.5" />
                     )}
                     <div>
-                      <h4 className="text-lg font-medium text-white">{q.text}</h4>
+                      <h4 className="text-lg font-medium text-white">{q.question}</h4>
                     </div>
                   </div>
                   
                   <div className="space-y-2 pl-9 mb-4">
                     <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-100 text-sm">
                       <span className="font-semibold text-green-400 block mb-1">Correct Answer:</span>
-                      {q.options[q.correctAnswer]}
+                      {q.correct_answer}
                     </div>
                     
                     {!isCorrect && (
                       <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-100 text-sm">
                         <span className="font-semibold text-red-400 block mb-1">Your Answer:</span>
-                        {q.options[userAnswer]}
+                        {userAnswer}
                       </div>
                     )}
                   </div>

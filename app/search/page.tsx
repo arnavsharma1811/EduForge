@@ -1,92 +1,117 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { GlassInput } from "@/components/ui/glass-input"
-import { GlassChip } from "@/components/ui/glass-chip"
-import { Search as SearchIcon, BookOpen, ChevronRight, FileText } from "lucide-react"
+import { GlassButton } from "@/components/ui/glass-button"
+import { Search as SearchIcon, BookOpen, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
-
-const MOCK_RESULTS = [
-  { id: "1", type: "course", title: "Advanced Machine Learning Concepts", match: "Machine Learning" },
-  { id: "2", type: "lesson", title: "Introduction to Neural Networks", course: "Advanced Machine Learning Concepts", match: "Neural Networks" },
-  { id: "3", type: "chapter", title: "Understanding Backpropagation", course: "Advanced Machine Learning Concepts", match: "Backpropagation" }
-]
+import { useSearchParams } from "next/navigation"
+import { apiClient } from "@/lib/apiClient"
 
 export default function SearchPage() {
-  const [query, setQuery] = useState("Machine Learning")
+  const searchParams = useSearchParams()
+  const initialQuery = searchParams.get("q") || ""
+  
+  const [query, setQuery] = useState(initialQuery)
+  const [results, setResults] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
+
+  const performSearch = async (searchQuery: string) => {
+    if (!searchQuery.trim()) return
+    setLoading(true)
+    setHasSearched(true)
+    try {
+      const data = await apiClient.searchCourses(searchQuery)
+      setResults(data.results || [])
+    } catch (err) {
+      console.error("Search failed", err)
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (initialQuery) {
+      performSearch(initialQuery)
+    }
+  }, [initialQuery])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    performSearch(query)
+  }
 
   return (
-    <div className="flex-1 p-6 lg:p-10 max-w-5xl mx-auto w-full">
+    <div className="flex-1 p-6 lg:p-8 max-w-5xl mx-auto w-full">
       <div className="mb-10 text-center">
-        <h1 className="text-3xl font-bold text-white mb-6">Search Library</h1>
-        <div className="max-w-2xl mx-auto relative">
-          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+        <h1 className="text-3xl font-bold text-white mb-4">Search Courses</h1>
+        <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative flex items-center">
+          <SearchIcon className="absolute left-4 text-muted-foreground h-5 w-5" />
           <GlassInput 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search courses, chapters, lessons..." 
-            className="pl-12 h-14 text-lg rounded-2xl bg-white/5 border-white/10 shadow-lg"
-            autoFocus
+            placeholder="What do you want to learn today?" 
+            className="pl-12 pr-32 h-14 text-lg rounded-full"
           />
-        </div>
-        <div className="flex flex-wrap gap-2 justify-center mt-6">
-          <span className="text-sm text-muted-foreground mr-2 py-1">Popular:</span>
-          <GlassChip>Machine Learning</GlassChip>
-          <GlassChip>React Patterns</GlassChip>
-          <GlassChip>System Design</GlassChip>
-          <GlassChip>Neuroscience</GlassChip>
-        </div>
+          <GlassButton 
+            type="submit" 
+            className="absolute right-1.5 top-1.5 bottom-1.5 rounded-full px-6"
+            disabled={loading}
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+          </GlassButton>
+        </form>
       </div>
 
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Search Results for "{query}"</h2>
-        
-        {MOCK_RESULTS.map((result) => (
-          <Link key={result.id} href={`/course/${result.id}`}>
-            <GlassCard className="p-4 flex items-center gap-4 hover:border-primary/50 group transition-all mb-4">
-              <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${
-                result.type === 'course' ? 'bg-primary/20 text-primary' : 
-                result.type === 'chapter' ? 'bg-secondary/20 text-secondary' : 
-                'bg-white/10 text-white/70'
-              }`}>
-                {result.type === 'course' ? <BookOpen className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-semibold uppercase tracking-wider ${
-                    result.type === 'course' ? 'text-primary' : 
-                    result.type === 'chapter' ? 'text-secondary' : 
-                    'text-muted-foreground'
-                  }`}>
-                    {result.type}
-                  </span>
-                  {result.course && (
-                    <>
-                      <span className="text-muted-foreground text-xs">•</span>
-                      <span className="text-xs text-muted-foreground truncate">{result.course}</span>
-                    </>
-                  )}
+      {hasSearched && !loading && (
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-medium text-white">
+            {results.length} results for "{query}"
+          </h2>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center p-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : results.length > 0 ? (
+        <div className="space-y-4">
+          {results.map((result) => (
+            <Link key={result.id} href={result.url}>
+              <GlassCard className="p-4 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-6 hover:bg-white/5 hover:border-primary/30 transition-all group">
+                <div className="h-24 w-full sm:w-32 shrink-0 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <BookOpen className="h-8 w-8 text-white/40 group-hover:text-primary transition-colors relative z-10" />
                 </div>
-                <h3 className="text-lg font-medium text-white truncate group-hover:text-primary-light transition-colors">
-                  {result.title}
-                </h3>
-              </div>
-              
-              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </GlassCard>
-          </Link>
-        ))}
-
-        {MOCK_RESULTS.length === 0 && (
-          <div className="text-center py-20">
-            <SearchIcon className="h-12 w-12 text-white/20 mx-auto mb-4" />
-            <h3 className="text-xl font-medium text-white mb-2">No results found</h3>
-            <p className="text-muted-foreground">Try adjusting your search terms</p>
-          </div>
-        )}
-      </div>
+                
+                <div className="flex-1 flex flex-col justify-center">
+                  <div className="flex items-start justify-between gap-4 mb-2">
+                    <h3 className="text-xl font-bold text-white group-hover:text-primary-light transition-colors line-clamp-2">
+                      {result.title}
+                    </h3>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-4 mt-auto">
+                    <span className="text-sm text-muted-foreground bg-white/5 px-3 py-1 rounded-full border border-white/10">
+                      {result.status && typeof result.status === 'string' ? result.status : 'Course'}
+                    </span>
+                  </div>
+                </div>
+              </GlassCard>
+            </Link>
+          ))}
+        </div>
+      ) : hasSearched && !loading ? (
+        <div className="text-center p-12 border border-dashed border-white/10 rounded-xl bg-white/5">
+          <SearchIcon className="h-12 w-12 text-white/20 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-white mb-2">No results found</h3>
+          <p className="text-muted-foreground">Try adjusting your search terms or browse all categories.</p>
+        </div>
+      ) : null}
     </div>
   )
 }

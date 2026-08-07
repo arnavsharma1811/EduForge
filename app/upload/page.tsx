@@ -3,15 +3,16 @@
 import { useState } from "react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { GlassButton } from "@/components/ui/glass-button"
-import { UploadCloud, File, X, CheckCircle2 } from "lucide-react"
-import Link from "next/link"
+import { UploadCloud, File, X, CheckCircle2, AlertCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { apiClient } from "@/lib/apiClient"
 
 export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [uploaded, setUploaded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault()
@@ -40,26 +41,30 @@ export default function UploadPage() {
   }
 
   const handleFile = (selectedFile: File) => {
+    setError(null)
     if (selectedFile.type === "application/pdf") {
+      if (selectedFile.size > 50 * 1024 * 1024) {
+        setError("File size exceeds 50MB limit.")
+        return
+      }
       setFile(selectedFile)
     } else {
-      alert("Please upload a valid PDF file.")
+      setError("Please upload a valid PDF file.")
     }
   }
 
-  const simulateUpload = () => {
+  const handleUpload = async () => {
+    if (!file) return
     setUploading(true)
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setUploading(false)
-          setUploaded(true)
-          return 100
-        }
-        return prev + 5
-      })
-    }, 150)
+    setError(null)
+    
+    try {
+      const result = await apiClient.uploadPDF(file)
+      router.push(`/course/${result.course_id}/generate`)
+    } catch (err: any) {
+      setError(err.message || "Failed to upload file")
+      setUploading(false)
+    }
   }
 
   return (
@@ -88,6 +93,13 @@ export default function UploadPage() {
             <h3 className="text-xl font-semibold text-white mb-2">Drag & drop your PDF here</h3>
             <p className="text-sm text-muted-foreground mb-6">Supported formats: PDF (Max 50MB)</p>
             
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 mb-4 bg-red-500/10 p-3 rounded-lg">
+                <AlertCircle className="h-4 w-4" />
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+            
             <label htmlFor="file-upload">
               <GlassButton variant="secondary" className="pointer-events-none">
                 Browse Files
@@ -111,7 +123,7 @@ export default function UploadPage() {
                 <h4 className="text-white font-medium truncate">{file.name}</h4>
                 <p className="text-xs text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
               </div>
-              {!uploading && !uploaded && (
+              {!uploading && (
                 <button 
                   onClick={() => setFile(null)}
                   className="p-2 text-muted-foreground hover:text-white rounded-full hover:bg-white/10 transition-colors"
@@ -119,42 +131,29 @@ export default function UploadPage() {
                   <X className="h-5 w-5" />
                 </button>
               )}
-              {uploaded && (
-                <div className="text-green-400">
-                  <CheckCircle2 className="h-6 w-6" />
-                </div>
-              )}
             </div>
 
-            {uploading && (
-              <div className="mb-8">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-white">Uploading...</span>
-                  <span className="text-white font-medium">{progress}%</span>
-                </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 ease-out" 
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
+            {error && (
+              <div className="flex items-center gap-2 text-red-400 mb-6 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                <AlertCircle className="h-5 w-5 shrink-0" />
+                <span className="text-sm">{error}</span>
               </div>
             )}
 
-            <div className="flex justify-end gap-4">
-              {!uploading && !uploaded && (
-                <GlassButton onClick={simulateUpload}>
+            {uploading && (
+              <div className="mb-8 flex flex-col items-center justify-center gap-4 py-8">
+                <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-white">Uploading & analyzing document...</p>
+              </div>
+            )}
+
+            {!uploading && (
+              <div className="flex justify-end gap-4">
+                <GlassButton onClick={handleUpload}>
                   Generate Course
                 </GlassButton>
-              )}
-              {uploaded && (
-                <Link href="/course/new/generate">
-                  <GlassButton>
-                    Continue to Generation
-                  </GlassButton>
-                </Link>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </GlassCard>
