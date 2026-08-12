@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"  // <-- ADD THIS
 import { useEffect, useState } from "react"
 import { GlassCard } from "@/components/ui/glass-card"
 import { GlassInput } from "@/components/ui/glass-input"
@@ -8,9 +9,9 @@ import { Search as SearchIcon, BookOpen, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { apiClient } from "@/lib/apiClient"
-export const dynamic = 'force-dynamic' 
 
-export default function SearchPage() {
+// Move all the existing logic into this inner component
+function SearchContent() {
   const searchParams = useSearchParams()
   const initialQuery = searchParams.get("q") || ""
   
@@ -114,5 +115,14 @@ export default function SearchPage() {
         </div>
       ) : null}
     </div>
+  )
+}
+
+// The default export now wraps the inner component with Suspense
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 p-6 lg:p-8 max-w-5xl mx-auto w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <SearchContent />
+    </Suspense>
   )
 }
