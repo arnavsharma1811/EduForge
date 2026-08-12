@@ -8,6 +8,7 @@ import { Search as SearchIcon, BookOpen, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { apiClient } from "@/lib/apiClient"
+export const dynamic = 'force-dynamic' 
 
 export default function SearchPage() {
   const searchParams = useSearchParams()
