@@ -29,13 +29,23 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 }
 
 export const apiClient = {
-  async uploadPDF(file: File) {
+  async uploadPDF(file: File, type: string = 'course') {
     const formData = new FormData()
     formData.append('file', file)
-    return fetchWithAuth('/upload/', {
+    return fetchWithAuth(`/upload/?type=${encodeURIComponent(type)}`, {
       method: 'POST',
       body: formData,
     })
+  },
+
+  async analyzePYQ(courseId: string) {
+    return fetchWithAuth(`/pyq/${courseId}/analyze`, {
+      method: 'POST',
+    })
+  },
+
+  async getPYQ(courseId: string) {
+    return fetchWithAuth(`/pyq/${courseId}`)
   },
 
   async generateCourse(courseId: string) {

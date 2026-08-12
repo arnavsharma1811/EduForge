@@ -194,10 +194,24 @@ Create `backend/.env`:
 ```env
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# --- Choose ONE LLM Provider ---
+# Option A: Hugging Face Serverless API (100% Free with Llama 3.2 Gated Approval)
+HF_TOKEN=your_hugging_face_token
+HF_MODEL=meta-llama/Llama-3.2-3B-Instruct
+
+# Option B: Groq Cloud API (100% Free - fast Llama 3.2)
+# GROQ_API_KEY=your_groq_api_key
+
+# Option C: Google Gemini API (100% Free - Google AI Studio)
+# GEMINI_API_KEY=your_gemini_api_key
+
+# Option D: Local Ollama (Used automatically if no API keys above are set)
 OLLAMA_URL=http://localhost:11434/api/generate
 ```
 
-Create `.env.local` in the project root:
+Create `.env.local` in the Next.js root folder:
+
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url

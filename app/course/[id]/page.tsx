@@ -11,7 +11,13 @@ import { apiClient } from "@/lib/apiClient"
 export default function CourseViewerPage() {
   const params = useParams()
   const courseId = params.id as string
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setSidebarOpen(true)
+    }
+  }, [])
   
   const [course, setCourse] = useState<any>(null)
   const [progress, setProgress] = useState<any>(null)
@@ -123,6 +129,14 @@ export default function CourseViewerPage() {
 
   return (
     <div className="flex-1 flex overflow-hidden h-[calc(100vh-4rem)] relative">
+      {/* Sidebar Backdrop Overlay for Mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar / TOC */}
       <div 
         className={`absolute md:relative z-20 h-full transition-all duration-300 ease-in-out ${
@@ -279,7 +293,7 @@ export default function CourseViewerPage() {
                   <ChevronLeft className="mr-2 h-4 w-4" /> Previous
                 </GlassButton>
                 
-                <div className="flex gap-4 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                   <Link href={`/quiz/${params.id}?chapter=${activeChapterIdx}`} className="w-full sm:w-auto">
                     <GlassButton variant="secondary" className="w-full sm:w-auto">
                       Chapter Quiz

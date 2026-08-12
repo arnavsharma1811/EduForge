@@ -41,3 +41,8 @@ class ProgressResponse(BaseModel):
 
 class SearchResponse(BaseModel):
     results: List[dict]
+
+class PYQAnalyzeResponse(BaseModel):
+    course_id: str
+    status: str
+    pyq_analysis: Optional[dict] = None

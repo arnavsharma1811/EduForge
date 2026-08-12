@@ -207,7 +207,7 @@ export default function QuizPage() {
               const isCorrect = userAnswer === q.correct_answer
               
               return (
-                <GlassCard key={i} className={`p-6 border-l-4 ${isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                <GlassCard key={i} className={`p-4 sm:p-6 border-l-4 ${isCorrect ? 'border-l-green-500' : 'border-l-red-500'}`}>
                   <div className="flex items-start gap-3 mb-4">
                     {isCorrect ? (
                       <CheckCircle2 className="h-6 w-6 text-green-500 shrink-0 mt-0.5" />

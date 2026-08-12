@@ -1,21 +1,21 @@
 from fastapi import Request, HTTPException
-from app.services.supabase_client import get_supabase_client
+from supabase import create_client
+import os
+
+supabase = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_ANON_KEY")
+)
 
 async def get_current_user(request: Request):
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid token")
+        raise HTTPException(status_code=401, detail="Missing token")
     
     token = auth_header.split(" ")[1]
-    supabase = get_supabase_client()
-    
     try:
-        user_res = supabase.auth.get_user(token)
-        if not user_res.user:
-            raise HTTPException(status_code=401, detail="Invalid token")
-        return {
-            "id": user_res.user.id,
-            "email": user_res.user.email
-        }
+        user = supabase.auth.get_user(token)
+        return user.user  
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Authentication failed: {str(e)}")
+        print("Auth error:", e)
+        raise HTTPException(status_code=401, detail="Invalid token")

@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+﻿from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
 from app.services.pdf_service import extract_text_from_pdf
 from app.services.supabase_client import get_supabase_client
 from app.utils.auth import get_current_user
@@ -7,6 +7,7 @@ router = APIRouter()
 
 @router.post("/")
 async def upload_pdf(
+    request: Request,
     file: UploadFile = File(...),
     user = Depends(get_current_user)
 ):
@@ -19,9 +20,15 @@ async def upload_pdf(
     if not text.strip():
         raise HTTPException(status_code=400, detail="No text could be extracted")
     
-    supabase = get_supabase_client()
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing token")
+    token = auth_header.split(" ")[1]
+    
+    supabase = get_supabase_client(token)
+    
     result = supabase.table("courses").insert({
-        "user_id": user["id"],
+        "user_id": user.id,
         "filename": file.filename,
         "extracted_text": text,
         "status": "uploaded"

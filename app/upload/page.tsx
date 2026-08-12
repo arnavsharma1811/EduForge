@@ -12,6 +12,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [uploadType, setUploadType] = useState<'course' | 'pyq'>('course')
   const router = useRouter()
 
   const handleDrag = (e: React.DragEvent) => {
@@ -59,8 +60,12 @@ export default function UploadPage() {
     setError(null)
     
     try {
-      const result = await apiClient.uploadPDF(file)
-      router.push(`/course/${result.course_id}/generate`)
+      const result = await apiClient.uploadPDF(file, uploadType)
+      if (uploadType === 'pyq') {
+        router.push(`/pyq/${result.course_id}/analyze`)
+      } else {
+        router.push(`/course/${result.course_id}/generate`)
+      }
     } catch (err: any) {
       setError(err.message || "Failed to upload file")
       setUploading(false)
@@ -71,7 +76,11 @@ export default function UploadPage() {
     <div className="flex-1 p-6 lg:p-8 max-w-4xl mx-auto w-full flex flex-col justify-center">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">Upload Material</h1>
-        <p className="text-muted-foreground">Upload any PDF to automatically generate a comprehensive course</p>
+        <p className="text-muted-foreground">
+          {uploadType === 'pyq' 
+            ? "Upload previous year papers to get a smart topic breakdown and study guide." 
+            : "Upload any PDF to automatically generate a comprehensive course."}
+        </p>
       </div>
 
       <GlassCard className="p-1 md:p-8">
@@ -133,6 +142,55 @@ export default function UploadPage() {
               )}
             </div>
 
+            {!uploading && (
+              <div className="mb-8">
+                <p className="text-sm font-medium text-white mb-3">Select processing type</p>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setUploadType('course')}
+                    className={`flex-1 p-4 rounded-xl border transition-all duration-200 ${
+                      uploadType === 'course'
+                        ? "bg-primary/20 border-primary/50 shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                        : "bg-white/5 border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                        uploadType === 'course' ? "border-primary" : "border-white/30"
+                      }`}>
+                        {uploadType === 'course' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className={`font-medium ${uploadType === 'course' ? "text-white" : "text-white/80"}`}>
+                        📚 Course
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-6 text-left">Generate modules, lessons, and quizzes.</p>
+                  </button>
+                  
+                  <button
+                    onClick={() => setUploadType('pyq')}
+                    className={`flex-1 p-4 rounded-xl border transition-all duration-200 ${
+                      uploadType === 'pyq'
+                        ? "bg-primary/20 border-primary/50 shadow-[0_0_15px_rgba(99,102,241,0.2)]"
+                        : "bg-white/5 border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className={`h-4 w-4 rounded-full border flex items-center justify-center shrink-0 ${
+                        uploadType === 'pyq' ? "border-primary" : "border-white/30"
+                      }`}>
+                        {uploadType === 'pyq' && <div className="h-2 w-2 rounded-full bg-primary" />}
+                      </div>
+                      <span className={`font-medium ${uploadType === 'pyq' ? "text-white" : "text-white/80"}`}>
+                        📝 Previous Year Papers
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-6 text-left">Extract topics, priority, and study guide.</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
             {error && (
               <div className="flex items-center gap-2 text-red-400 mb-6 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
                 <AlertCircle className="h-5 w-5 shrink-0" />
@@ -150,7 +208,7 @@ export default function UploadPage() {
             {!uploading && (
               <div className="flex justify-end gap-4">
                 <GlassButton onClick={handleUpload}>
-                  Generate Course
+                  {uploadType === 'pyq' ? "Analyze Papers" : "Generate Course"}
                 </GlassButton>
               </div>
             )}

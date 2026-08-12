@@ -3,8 +3,7 @@ import json
 import re
 import logging
 import traceback
-
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from app.services.llm_service import LLMService, LLMTimeoutError, LLMServiceError
 from app.services.supabase_client import get_supabase_client
 from app.utils.auth import get_current_user
@@ -14,30 +13,20 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 llm = LLMService()
 
-
 def _extract_json_array(text: str) -> list:
-    """Robustly extract a JSON array from LLM output that may contain
-    markdown fences, preamble text, or other noise."""
-    # Strip markdown code fences
     cleaned = re.sub(r"```(?:json)?\s*", "", text).strip()
-
-    # Try parsing the whole cleaned string
     try:
         parsed = json.loads(cleaned)
         if isinstance(parsed, list):
             return parsed
-        # If the model returned a dict with a "questions" key, extract it
         if isinstance(parsed, dict) and "questions" in parsed:
             return parsed["questions"]
     except json.JSONDecodeError:
         pass
 
-    # Fallback: find the outermost [ ... ] using bracket-depth scanning
     start = cleaned.find("[")
     if start == -1:
-        raise ValueError(
-            f"No JSON array found in LLM response. Raw:\n{text[:500]}"
-        )
+        raise ValueError(f"No JSON array found in LLM response. Raw:\n{text[:500]}")
 
     depth = 0
     for i in range(start, len(cleaned)):
@@ -52,25 +41,26 @@ def _extract_json_array(text: str) -> list:
                 except json.JSONDecodeError:
                     break
 
-    raise ValueError(
-        f"Could not parse JSON array from LLM response. Raw:\n{text[:500]}"
-    )
-
+    raise ValueError(f"Could not parse JSON array from LLM response. Raw:\n{text[:500]}")
 
 @router.post("/generate/{course_id}/{chapter_index}")
 async def generate_quiz(
+    request: Request,
     course_id: str,
     chapter_index: int,
     user=Depends(get_current_user),
 ):
-    supabase = get_supabase_client()
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing token")
+    token = auth_header.split(" ")[1]
+    supabase = get_supabase_client(token)
 
-    # ── 1. Fetch course ─────────────────────────────────────────────
     course = (
         supabase.table("courses")
         .select("*")
         .eq("id", course_id)
-        .eq("user_id", user["id"])
+        .eq("user_id", user.id)
         .execute()
     )
     if not course.data:
@@ -87,7 +77,6 @@ async def generate_quiz(
             detail=f"Chapter index {chapter_index} out of range (0–{len(chapters) - 1})",
         )
 
-    # ── 2. Build chapter content ────────────────────────────────────
     chapter = chapters[chapter_index]
     content = f"Chapter: {chapter.get('title', 'Untitled')}\n"
     for topic in chapter.get("topics", []):
@@ -100,7 +89,6 @@ async def generate_quiz(
             detail="Not enough content in this chapter to generate a quiz",
         )
 
-    # ── 3. Generate quiz via LLM ────────────────────────────────────
     prompt = f"""Generate exactly 3 multiple-choice questions from the following content.
 Output ONLY a valid JSON array — no markdown fences, no explanation.
 
@@ -135,7 +123,6 @@ JSON array:"""
         logger.error("Quiz unexpected error: %s", traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
-    # ── 4. Validate question structure ──────────────────────────────
     validated = []
     for i, q in enumerate(questions):
         if not isinstance(q, dict):
@@ -153,16 +140,14 @@ JSON array:"""
             detail="AI returned questions but none had the expected structure",
         )
 
-    # ── 5. Store quiz in Supabase ───────────────────────────────────
     try:
         supabase.table("quizzes").insert({
             "course_id": course_id,
             "chapter_index": chapter_index,
             "questions": validated,
-            "user_id": user["id"],
+            "user_id": user.id,
         }).execute()
     except Exception as e:
-        # Don't fail the response if storage fails
         logger.warning("Failed to store quiz in Supabase: %s", e)
 
     return {"questions": validated}
