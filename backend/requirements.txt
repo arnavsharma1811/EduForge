@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+supabase
+python-multipart
+pdfplumber
+chromadb
+sentence-transformers
+requests
+python-dotenv
+langgraph
+peft
+transformers
+accelerate
+bitsandbytes
