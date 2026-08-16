@@ -62,7 +62,7 @@ class LLMService:
     def _generate_groq(self, prompt: str, temperature: float, max_tokens: int) -> str:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
-            "Authorization": f"Bearer {self.groq_api_key}",
+            "Authorization": f"Bearer {self.groq_api_key.strip() if self.groq_api_key else ''}",
             "Content-Type": "application/json",
         }
         payload = {
@@ -75,14 +75,24 @@ class LLMService:
         if response.status_code == 200:
             return response.json()["choices"][0]["message"]["content"].strip()
         else:
-            raise LLMServiceError(f"Groq API error: {response.status_code} - {response.text}")
+            raise LLMServiceError(f"Groq API error {response.status_code}: {response.text}")
 
     def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int) -> str:
-        """Call Google Gemini via REST API (works on Render free tier)."""
-        url = (
-            f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.gemini_model}:generateContent?key={self.gemini_api_key}"
-        )
+        """Call Google Gemini via REST API (v1 / v1beta fallback)."""
+        clean_key = self.gemini_api_key.strip() if self.gemini_api_key else ""
+        clean_model = self.gemini_model.strip() if self.gemini_model else "gemini-1.5-flash"
+        
+        # Strip any leading 'models/' if user included it in env var
+        if clean_model.startswith("models/"):
+            clean_model = clean_model[7:]
+
+        # Try v1 first, then v1beta
+        endpoints = [
+            f"https://generativelanguage.googleapis.com/v1/models/{clean_model}:generateContent?key={clean_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent?key={clean_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={clean_key}",
+        ]
+
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
@@ -90,23 +100,27 @@ class LLMService:
                 "maxOutputTokens": max_tokens,
             },
         }
-        try:
-            response = requests.post(url, json=payload, timeout=60)
-            if response.status_code == 200:
-                data = response.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        return parts[0].get("text", "").strip()
-                raise LLMServiceError(f"Unexpected Gemini response structure: {data}")
-            else:
-                raise LLMServiceError(f"Gemini API error: {response.status_code} - {response.text}")
-        except LLMServiceError:
-            raise
-        except Exception as e:
-            logger.error(f"Gemini request failed: {e}")
-            raise LLMServiceError(f"Gemini request failed: {e}")
+
+        last_error = ""
+        for url in endpoints:
+            try:
+                response = requests.post(url, json=payload, timeout=60)
+                if response.status_code == 200:
+                    data = response.json()
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            return parts[0].get("text", "").strip()
+                    raise LLMServiceError(f"Unexpected Gemini response structure: {data}")
+                else:
+                    last_error = f"Gemini API error ({url.split('/')[3]}): {response.status_code} - {response.text}"
+            except LLMServiceError as e:
+                last_error = str(e)
+            except Exception as e:
+                last_error = f"Gemini request failed: {e}"
+
+        raise LLMServiceError(last_error)
 
     def _generate_hf(self, prompt: str, temperature: float, max_tokens: int) -> str:
         """HuggingFace Inference API - NOTE: may not work on Render free tier (outbound DNS restricted)."""
