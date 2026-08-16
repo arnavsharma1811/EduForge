@@ -16,13 +16,12 @@ class LLMService:
     def __init__(self):
         # --- Try Groq first ---
         self.groq_api_key = os.getenv("GROQ_API_KEY")
-        # You can override this with the GROQ_MODEL env var in Render.
-        # Make sure GROQ_MODEL in Render is NOT set to 'llama-3.2-3b-preview'!
-        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        # Ensure GROQ_MODEL in Render is set to 'llama-3.1-8b-instant'
+        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
         # --- Fallback to Gemini (works on Render free tier) ---
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
 
         # --- Last resort: HuggingFace ---
         self.hf_token = os.getenv("HF_TOKEN")
@@ -87,7 +86,7 @@ class LLMService:
     def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int) -> str:
         """Call Google Gemini via REST API (v1 / v1beta fallback)."""
         clean_key = self.gemini_api_key.strip() if self.gemini_api_key else ""
-        clean_model = self.gemini_model.strip() if self.gemini_model else "gemini-1.5-flash"
+        clean_model = self.gemini_model.strip() if self.gemini_model else "gemini-3.7-flash"
         
         # Strip any leading 'models/' if user included it in env var
         if clean_model.startswith("models/"):
@@ -95,10 +94,10 @@ class LLMService:
 
         # Try v1beta latest, v1beta, v1
         endpoints = [
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={clean_key}",
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={clean_key}",
-            f"https://generativelanguage.googleapis.com/v1/models/{clean_model}:generateContent?key={clean_key}",
             f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent?key={clean_key}",
+            f"https://generativelanguage.googleapis.com/v1/models/{clean_model}:generateContent?key={clean_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent?key={clean_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={clean_key}",
         ]
 
         payload = {
