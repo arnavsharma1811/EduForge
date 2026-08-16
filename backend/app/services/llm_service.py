@@ -6,6 +6,14 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+
+class LLMServiceError(Exception):
+    pass
+
+class LLMTimeoutError(LLMServiceError):
+    pass
+
+
 class LLMService:
     def __init__(self):
         self.hf_token = os.getenv("HF_TOKEN")
@@ -19,7 +27,7 @@ class LLMService:
             logger.info(f"✅ Using HF model: {self.hf_model}")
 
     def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 2000) -> str:
-        """Generate using Hugging Face with retries, fallback to Ollama, then fallback to static."""
+        """Generate using Hugging Face with retries."""
         if self.hf_token:
             for attempt in range(3):
                 try:
@@ -27,16 +35,14 @@ class LLMService:
                 except Exception as e:
                     logger.error(f"HF attempt {attempt+1} failed: {e}")
                     if attempt < 2:
-                        time.sleep(2 ** attempt)  # exponential backoff
+                        time.sleep(2 ** attempt)
                     else:
-                        logger.error("All HF attempts failed. Trying Ollama fallback.")
-                        # Fallback to Ollama (will fail on Render but we catch it)
+                        logger.error("All HF attempts failed. Falling back to Ollama.")
                         return self._generate_ollama(prompt, temperature, max_tokens)
         else:
             return self._generate_ollama(prompt, temperature, max_tokens)
         
-        # If everything fails, return a friendly error message
-        return "I'm sorry, the AI service is currently unavailable. Please try again later."
+        return "AI service unavailable. Please try again later."
 
     def _generate_hf(self, prompt: str, temperature: float, max_tokens: int) -> str:
         url = f"https://api-inference.huggingface.co/models/{self.hf_model}"
@@ -65,14 +71,13 @@ class LLMService:
             elif isinstance(data, dict):
                 return data.get("generated_text", "").strip()
             else:
-                raise Exception(f"Unexpected HF response: {data}")
+                raise LLMServiceError(f"Unexpected HF response: {data}")
         elif response.status_code == 503:
-            raise Exception("Model is loading, please retry.")
+            raise LLMServiceError("Model loading, please retry.")
         else:
-            raise Exception(f"HF API error: {response.status_code} - {response.text}")
+            raise LLMServiceError(f"HF API error: {response.status_code} - {response.text}")
 
     def _generate_ollama(self, prompt: str, temperature: float, max_tokens: int) -> str:
-        """Fallback to local Ollama (only works locally)."""
         try:
             response = requests.post(
                 self.ollama_url,
@@ -90,7 +95,7 @@ class LLMService:
             if response.status_code == 200:
                 return response.json().get("response", "").strip()
             else:
-                raise Exception(f"Ollama error: {response.status_code}")
+                raise LLMServiceError(f"Ollama error: {response.status_code}")
         except Exception as e:
             logger.error(f"Ollama failed: {e}")
-            raise Exception(f"Ollama failed: {e}")
+            raise LLMServiceError(f"Ollama failed: {e}")
