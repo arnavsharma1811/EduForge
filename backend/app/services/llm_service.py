@@ -60,6 +60,7 @@ class LLMService:
             raise LLMServiceError("No LLM provider configured. Set GROQ_API_KEY or GEMINI_API_KEY.")
 
     def _generate_groq(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        import time
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.groq_api_key.strip() if self.groq_api_key else ''}",
@@ -71,11 +72,17 @@ class LLMService:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"].strip()
-        else:
-            raise LLMServiceError(f"Groq API error {response.status_code}: {response.text}")
+        max_retries = 3
+        for attempt in range(max_retries):
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            if response.status_code == 200:
+                return response.json()["choices"][0]["message"]["content"].strip()
+            elif response.status_code == 429 and attempt < max_retries - 1:
+                wait_time = 10
+                logger.warning(f"⚠️ Groq Rate limit 429 hit (attempt {attempt+1}/{max_retries}). Sleeping {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise LLMServiceError(f"Groq API error {response.status_code}: {response.text}")
 
     def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int) -> str:
         """Call Google Gemini via REST API (v1 / v1beta fallback)."""
@@ -86,11 +93,12 @@ class LLMService:
         if clean_model.startswith("models/"):
             clean_model = clean_model[7:]
 
-        # Try v1 first, then v1beta
+        # Try v1beta latest, v1beta, v1
         endpoints = [
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={clean_key}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={clean_key}",
             f"https://generativelanguage.googleapis.com/v1/models/{clean_model}:generateContent?key={clean_key}",
             f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent?key={clean_key}",
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={clean_key}",
         ]
 
         payload = {
