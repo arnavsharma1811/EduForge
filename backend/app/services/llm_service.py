@@ -16,15 +16,15 @@ class LLMService:
     def __init__(self):
         # --- Try Groq first ---
         self.groq_api_key = os.getenv("GROQ_API_KEY")
-        # llama-3.2-3b-preview was decommissioned by Groq. Use a current supported model.
-        # You can also override this with the GROQ_MODEL env var in Render.
-        self.groq_model = os.getenv("GROQ_MODEL", "llama3-8b-8192")
+        # You can override this with the GROQ_MODEL env var in Render.
+        # Make sure GROQ_MODEL in Render is NOT set to 'llama-3.2-3b-preview'!
+        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
-        # --- Fallback to Gemini (works on Render free tier, no outbound DNS issues) ---
+        # --- Fallback to Gemini (works on Render free tier) ---
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
-        # --- Last resort: HuggingFace (NOTE: may NOT work on Render free tier due to outbound network restrictions) ---
+        # --- Last resort: HuggingFace ---
         self.hf_token = os.getenv("HF_TOKEN")
         self.hf_model = os.getenv("HF_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
 
@@ -43,12 +43,12 @@ class LLMService:
             try:
                 return self._generate_groq(prompt, temperature, max_tokens)
             except Exception as e:
-                logger.error(f"Groq failed: {e}.")
+                logger.error(f"❌ Groq failed (Model: {self.groq_model}): {e}")
                 if self.gemini_api_key:
-                    logger.info("Falling back to Gemini...")
+                    logger.info("🔄 Falling back to Gemini...")
                     return self._generate_gemini(prompt, temperature, max_tokens)
                 elif self.hf_token:
-                    logger.warning("Falling back to HuggingFace (may fail on Render free tier)...")
+                    logger.warning("🔄 Falling back to HuggingFace...")
                     return self._generate_hf(prompt, temperature, max_tokens)
                 else:
                     raise LLMServiceError(f"Groq failed and no fallback configured: {e}")
