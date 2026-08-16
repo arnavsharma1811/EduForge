@@ -6,7 +6,6 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# --- Exceptions required by chat.py ---
 class LLMServiceError(Exception):
     pass
 
@@ -16,41 +15,55 @@ class LLMTimeoutError(LLMServiceError):
 
 class LLMService:
     def __init__(self):
+        # --- Try Groq first ---
+        self.groq_api_key = os.getenv("GROQ_API_KEY")
+        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.2-3b-preview")  # or "mixtral-8x7b-32768"
+
+        # --- Fallback to HF ---
         self.hf_token = os.getenv("HF_TOKEN")
         self.hf_model = os.getenv("HF_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
-        
-        if not self.hf_token:
-            logger.warning("⚠️ HF_TOKEN not set! AI generation will fail.")
+
+        if self.groq_api_key:
+            logger.info(f"✅ Using Groq with model: {self.groq_model}")
+        elif self.hf_token:
+            logger.warning(f"⚠️ Groq not configured, falling back to HF: {self.hf_model}")
         else:
-            logger.info(f"✅ Using HF model: {self.hf_model}")
+            logger.error("❌ No LLM credentials configured!")
 
     def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 2000) -> str:
-        """Generate using Hugging Face Inference API with retries."""
-        if not self.hf_token:
-            raise LLMServiceError("HF_TOKEN not configured")
-
-        for attempt in range(3):
+        """Try Groq first, then fallback to HF."""
+        if self.groq_api_key:
             try:
-                return self._generate_hf(prompt, temperature, max_tokens)
-            except LLMTimeoutError:
-                # Propagate timeout errors directly
-                raise
+                return self._generate_groq(prompt, temperature, max_tokens)
             except Exception as e:
-                logger.error(f"HF attempt {attempt+1} failed: {e}")
-                if attempt < 2:
-                    time.sleep(2 ** attempt)  # 1, 2, 4 seconds
-                else:
-                    logger.error("All HF attempts failed.")
-                    raise LLMServiceError(f"HF generation failed after retries: {e}")
+                logger.error(f"Groq failed: {e}. Falling back to HF.")
+                return self._generate_hf(prompt, temperature, max_tokens)
+        elif self.hf_token:
+            return self._generate_hf(prompt, temperature, max_tokens)
+        else:
+            raise LLMServiceError("No LLM provider configured")
 
-        raise LLMServiceError("HF generation failed")
+    def _generate_groq(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        url = "https://api.groq.com/openai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.groq_api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": self.groq_model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"].strip()
+        else:
+            raise LLMServiceError(f"Groq API error: {response.status_code} - {response.text}")
 
     def _generate_hf(self, prompt: str, temperature: float, max_tokens: int) -> str:
         url = f"https://api-inference.huggingface.co/models/{self.hf_model}"
-        headers = {
-            "Authorization": f"Bearer {self.hf_token}",
-            "Content-Type": "application/json",
-        }
+        headers = {"Authorization": f"Bearer {self.hf_token}"}
         payload = {
             "inputs": prompt,
             "parameters": {
@@ -60,28 +73,18 @@ class LLMService:
                 "do_sample": True,
             },
         }
-
-        logger.info(f"📡 Calling HF API: {self.hf_model}")
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=60)
-        except requests.exceptions.Timeout:
-            logger.error("HF request timed out")
-            raise LLMTimeoutError("HF API request timed out")
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list) and len(data) > 0:
+                    return data[0].get("generated_text", "").strip()
+                elif isinstance(data, dict):
+                    return data.get("generated_text", "").strip()
+                else:
+                    raise LLMServiceError(f"Unexpected HF response: {data}")
+            else:
+                raise LLMServiceError(f"HF API error: {response.status_code} - {response.text}")
         except Exception as e:
             logger.error(f"HF request failed: {e}")
             raise LLMServiceError(f"HF request failed: {e}")
-
-        logger.info(f"📡 HF response status: {response.status_code}")
-
-        if response.status_code == 200:
-            data = response.json()
-            if isinstance(data, list) and len(data) > 0:
-                return data[0].get("generated_text", "").strip()
-            elif isinstance(data, dict):
-                return data.get("generated_text", "").strip()
-            else:
-                raise LLMServiceError(f"Unexpected HF response: {data}")
-        elif response.status_code == 503:
-            raise LLMServiceError("Model is loading, please retry.")
-        else:
-            raise LLMServiceError(f"HF API error: {response.status_code} - {response.text}")
