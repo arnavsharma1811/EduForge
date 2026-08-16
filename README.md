@@ -11,6 +11,10 @@
   <a href="https://edu-forge-eta.vercel.app/">🔴 Try the Live Demo on Vercel</a>
 </h3>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Copyright-Arnav%20Sharma-f59e0b?style=for-the-badge" alt="Copyright" />
+</p>
+
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agentic_AI-1a73e8?style=for-the-badge&logo=langchain)](https://langchain.com)
@@ -282,7 +286,7 @@ EduForge is completely decoupled. Use the backend as a standalone service if you
 
 ---
 <div align="center">
-  <b>Built with passion by the EduForge team.</b><br>
-  Released under the MIT License. <br><br>
+  <b>Built with passion by Arnav Sharma.</b><br>
+  &copy; 2026 Arnav Sharma. All rights reserved.<br><br>
   <i>If EduForge saved you study time, consider dropping a ⭐!</i>
 </div>
