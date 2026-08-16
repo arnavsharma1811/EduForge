@@ -1,233 +1,195 @@
-<p align="center">
-  <img src="https://img.icons8.com/fluency/96/graduation-cap.png" alt="EduForge Logo" width="80" />
-</p>
+<div align="center">
 
-<h1 align="center">EduForge</h1>
+<img src="https://img.icons8.com/fluency/144/graduation-cap.png" alt="EduForge Logo" width="120" />
 
-<p align="center">
-  <strong>Transform any PDF into a structured, AI-powered e-learning course — in seconds.</strong>
-</p>
+# ⚡ EduForge 
 
-<p align="center">
-  <a href="#-features"><img src="https://img.shields.io/badge/Features-8-6366f1?style=for-the-badge" alt="Features" /></a>
-  <a href="#-tech-stack"><img src="https://img.shields.io/badge/Stack-Next.js%20%2B%20FastAPI-8b5cf6?style=for-the-badge" alt="Tech Stack" /></a>
-  <a href="#-getting-started"><img src="https://img.shields.io/badge/Setup-5%20min-10b981?style=for-the-badge" alt="Setup" /></a>
-  <a href="#-license"><img src="https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge" alt="License" /></a>
-</p>
+**The ultimate AI-native e-learning factory.**  
+*Upload a raw PDF. Get a complete, interactive, structured course in seconds.*
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white" alt="React" />
-  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Supabase-Auth%20%2B%20DB-3fcf8e?logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/Ollama-Llama%203.2-ff6f00?logo=meta&logoColor=white" alt="Ollama" />
-  <img src="https://img.shields.io/badge/LangGraph-Agent-1a73e8?logo=langchain&logoColor=white" alt="LangGraph" />
-  <img src="https://img.shields.io/badge/ChromaDB-Vector%20Search-ff6b6b?logo=google-chrome&logoColor=white" alt="ChromaDB" />
-  <img src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
-</p>
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agentic_AI-1a73e8?style=for-the-badge&logo=langchain)](https://langchain.com)
+[![Groq](https://img.shields.io/badge/Groq-LPU_Inference-f55036?style=for-the-badge&logo=groq)](https://groq.com)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth_%26_DB-3fcf8e?style=for-the-badge&logo=supabase)](https://supabase.com)
+
+[Explore Features](#-the-eduforge-experience) • [View Architecture](#-system-architecture) • [Quick Start](#-quick-start) • [Tech Stack](#-the-stack)
+
+<br/>
+</div>
 
 ---
 
-## 📖 What is EduForge?
+## 🔮 The Vision
 
-**EduForge** is a full-stack AI learning platform that transforms raw PDF documents into complete, interactive e-learning courses. Upload any study material — textbook chapters, research papers, lecture notes — and EduForge's multi-step AI pipeline will analyze, structure, and generate a full course with chapters, lessons, quizzes, and an AI tutor chatbot.
+Education doesn't scale when educators and students are forced to spend hundreds of hours manually parsing textbooks, organizing notes, and drafting practice questions. 
 
-> **The problem:** Students and educators spend hours manually organizing study materials into structured learning paths.  
-> **The solution:** EduForge automates the entire process using a LangGraph-powered AI agent that chunks, extracts topics, generates hierarchical course structures, self-validates, and refines — all in one pipeline.
+**EduForge** completely eliminates the friction of learning material preparation. Powered by a hyper-optimized **Agentic AI Pipeline** and running on **Groq's LPU Inference Engine**, EduForge ingests dense, unstructured PDFs and autonomously architects a full-fledged, highly-interactive e-learning platform specifically for that content.
 
----
+<br/>
 
-## ✨ Features
+## 🚀 The EduForge Experience
 
-### 🧠 AI-Powered Course Generation
-Upload a PDF and watch as a **5-node LangGraph agent** transforms it into a structured course:
-1. **Chunking** — Intelligently splits document text into digestible segments
-2. **Topic Extraction** — Identifies key concepts and themes
-3. **Structure Generation** — Builds a hierarchical course (Chapters → Topics → Lessons)
-4. **Self-Validation** — Evaluates the quality of the generated outline
-5. **Refinement** — Produces a polished final course based on validation feedback
+### 🧠 The LangGraph AI Architect
+EduForge doesn't just "summarize" documents. It runs a **5-Node Agentic Workflow** that acts as an expert curriculum designer:
+- `1` **Intelligent Chunking:** Breaks down dense PDFs into semantically coherent micro-lessons.
+- `2` **Topic Extraction:** Autonomously identifies core themes and learning objectives.
+- `3` **Curriculum Generation:** Drafts a multi-chapter hierarchical syllabus.
+- `4` **Self-Validation:** The AI critiques its own curriculum for flow, gaps, and logical progression.
+- `5` **Final Polish:** Generates the polished, highly-structured final course payload.
 
-### 📚 Interactive Course Viewer
-- **Hierarchical navigation** — Collapsible sidebar with Chapters, Topics, and Lessons
-- **Rich lesson content** — Explanations, real-world examples, key takeaways, and summaries
-- **Progress tracking** — Mark lessons complete with visual progress bars per chapter and overall
+### ⚡ Blazing Fast Generation 
+Backed by **Groq (`llama-3.1-8b-instant`)** and gracefully falling back to **Google Gemini (`gemini-3.7-flash`)**, course generation feels instant. Rate limit protections, exponential backoffs, and multi-endpoint routing ensure the pipeline *never* drops a document.
 
-### 💬 AI Course Tutor (RAG-Powered)
-- Context-aware Q&A chatbot trained on your specific course content
-- **RAG pipeline** using ChromaDB vector search with `all-MiniLM-L6-v2` embeddings
-- Suggested prompt chips: *"Summarize this chapter"*, *"Explain the core concept"*, *"Generate a practice question"*
+### 💬 Vector-Powered Tutor (RAG)
+Every generated course gets its own dedicated, context-aware AI tutor.
+Powered by **ChromaDB** and `all-MiniLM-L6-v2` embeddings, the tutor achieves instant semantic recall across your textbook. Ask questions, request summaries, or have the tutor explain complex concepts like you're 5.
 
-### 📝 AI-Generated Quizzes
-- Auto-generated multiple-choice quizzes per chapter
-- Instant scoring with detailed explanations
-- Question-by-question review with correct/incorrect highlighting
+### 🏆 Gamified Mastery
+- **Auto-Generated Quizzes:** Instantly generated multiple-choice knowledge checks per chapter.
+- **Micro-Progress Tracking:** Visual progress bars track every lesson read and quiz passed.
+- **Learning Analytics:** Global dashboard tracking active courses, hours learned, and study streaks.
 
-### 🔍 Course Search & Discovery
-- Search across all your courses with real-time results
-- Debounced search with result cards
+### 💎 Premium Glassmorphism UI
+An uncompromised aesthetic experience. Designed dark-first with frosted glass panels, fluid Framer Motion animations, glowing gradient accents, and immersive UI micro-interactions.
 
-### 👤 User Profiles & Auth
-- **Supabase Auth** — Email/password + Google OAuth
-- Personal dashboard with learning statistics
-- Session persistence and secure token-based API access
+<br/>
 
-### 📊 Learning Dashboard
-- At-a-glance stats: Total Courses, Hours Learned, Average Quiz Score, Current Streak
-- Course cards with status indicators (Ready, Generating, Uploaded, Error)
-- Quick access to upload and continue learning
+## 🏗 System Architecture
 
-### 🎨 Glassmorphism UI
-- Dark-first design with frosted glass components
-- Smooth animations powered by Framer Motion
-- Custom glass cards, buttons, inputs, and chips
-- Glowing gradient accents and shimmer effects
+EduForge is engineered as a robust decoupled system, communicating via REST and utilizing a shared Supabase PostgreSQL backend.
 
----
+```mermaid
+graph TD
+    %% Styling
+    classDef frontend fill:#000,stroke:#fff,stroke-width:2px,color:#fff
+    classDef backend fill:#009688,stroke:#fff,stroke-width:2px,color:#fff
+    classDef db fill:#3fcf8e,stroke:#fff,stroke-width:2px,color:#111
+    classDef ai fill:#f55036,stroke:#fff,stroke-width:2px,color:#fff
 
-## 🏗️ Architecture
+    subgraph Client [Client Tier]
+        UI[Next.js 16 UI App Router]:::frontend
+    end
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Next.js 16)                        │
-│                                                                     │
-│  Landing ─── Auth ─── Dashboard ─── Upload ─── Course ─── Quiz     │
-│                          │            │          │   │               │
-│                          │            │          │   └── Chat (RAG)  │
-│                     Supabase Auth  apiClient  apiClient              │
-└────────────────────────────┬────────────┬───────────────────────────┘
-                             │            │
-                    Auth Tokens    REST API (JSON)
-                             │            │
-┌────────────────────────────┴────────────┴───────────────────────────┐
-│                       BACKEND (FastAPI)                              │
-│                                                                     │
-│  Routers:  /upload  /course  /chat  /quiz  /progress  /search       │
-│                │        │       │      │        │         │          │
-│  Services:  PDF     LangGraph  RAG   LLM    Supabase   Supabase    │
-│            Service   Agent    Service Service  Client    Client     │
-│               │        │       │      │                             │
-│            pdfplumber  │    ChromaDB  Ollama                        │
-│                        │   (Vectors) (llama3.2)                     │
-│                     5-Node                                          │
-│                     Pipeline                                        │
-└─────────────────────────────────────────────────────────────────────┘
-                             │
-                    ┌────────┴────────┐
-                    │    Supabase     │
-                    │   (PostgreSQL)  │
-                    │                 │
-                    │  • courses      │
-                    │  • chat_history │
-                    │  • quizzes      │
-                    │  • progress     │
-                    └─────────────────┘
+    subgraph Core [FastAPI Backend]
+        API[API Gateway & Routers]:::backend
+        Agent[LangGraph 5-Node Agent]:::backend
+        RAG[ChromaDB Vector Store]:::backend
+        PDF[pdfplumber Extractor]:::backend
+    end
+
+    subgraph AI [Inference Providers]
+        Groq[Groq Llama 3.1 8B]:::ai
+        Gemini[Google Gemini 3.7 Flash]:::ai
+    end
+
+    subgraph Data [Persistence Layer]
+        Supa[(Supabase PostgreSQL)]:::db
+        Auth[(Supabase Auth)]:::db
+    end
+
+    %% Connections
+    UI <-->|JWT / REST| API
+    UI <-->|OAuth| Auth
+    
+    API --> PDF
+    API --> Agent
+    API <--> RAG
+
+    Agent --> Groq
+    Agent -.->|Fallback| Gemini
+    
+    API <-->|CRUD| Supa
 ```
 
----
+<br/>
 
-## 🛠️ Tech Stack
+## 🛠 The Stack
 
-### Frontend
-| Technology | Purpose |
-|---|---|
-| **Next.js 16** | React framework with App Router |
-| **React 19** | UI library |
-| **TypeScript 5** | Type safety |
-| **Tailwind CSS 4** | Utility-first styling |
-| **Framer Motion** | Animations & transitions |
-| **shadcn/ui** | UI component primitives |
-| **Lucide React** | Icon system |
-| **next-themes** | Dark/light mode |
-| **Supabase JS** | Auth & session management |
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="25%">
+        <img src="https://skillicons.dev/icons?i=nextjs,react" /><br>
+        <b>Frontend</b><br>
+        Next.js 16, React 19, Framer Motion, Tailwind CSS
+      </td>
+      <td align="center" width="25%">
+        <img src="https://skillicons.dev/icons?i=fastapi,python" /><br>
+        <b>Backend</b><br>
+        FastAPI, Uvicorn, Pydantic
+      </td>
+      <td align="center" width="25%">
+        <img src="https://skillicons.dev/icons?i=supabase,postgres" /><br>
+        <b>Database & Auth</b><br>
+        Supabase, PostgreSQL, JWT
+      </td>
+      <td align="center" width="25%">
+        <img src="https://skillicons.dev/icons?i=pytorch,gcp" /><br>
+        <b>AI & RAG</b><br>
+        LangGraph, Groq, Gemini, ChromaDB
+      </td>
+    </tr>
+  </table>
+</div>
 
-### Backend
-| Technology | Purpose |
-|---|---|
-| **FastAPI** | Async Python web framework |
-| **Uvicorn** | ASGI server |
-| **LangGraph** | Multi-step AI agent orchestration |
-| **Ollama** | Local LLM inference (Llama 3.2 3B) |
-| **ChromaDB** | Vector database for RAG |
-| **sentence-transformers** | Text embeddings (`all-MiniLM-L6-v2`) |
-| **pdfplumber** | PDF text extraction |
-| **Supabase Python** | Database & auth verification |
-| **Pydantic** | Data validation & schemas |
+<br/>
 
----
+## 🚀 Quick Start
 
-## 🚀 Getting Started
+Get your local instance of EduForge running in under 5 minutes.
 
-### Prerequisites
+### 1. The Essentials
+Ensure you have installed:
+- [Node.js](https://nodejs.org/) (v18+)
+- [Python](https://www.python.org/) (v3.10+)
+- Accounts for [Supabase](https://supabase.com), [Groq](https://console.groq.com), and [Google AI Studio](https://aistudio.google.com).
 
-- **Node.js** ≥ 18
-- **Python** ≥ 3.10
-- **Ollama** installed and running ([ollama.com](https://ollama.com))
-- **Supabase** project ([supabase.com](https://supabase.com))
-
-### 1. Clone the Repository
+### 2. Clone & Setup Backend
 
 ```bash
 git clone https://github.com/yourusername/EduForge.git
-cd EduForge
-```
+cd EduForge/backend
 
-### 2. Set Up the Backend
-
-```bash
-cd backend
-
-# Create and activate a virtual environment
+# Create & activate virtual environment
 python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install dependencies
+# Install heavy dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment Variables
+### 3. Environment Secrets
 
-Create `backend/.env`:
-
+Create a `.env` file in the `backend/` directory:
 ```env
-SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
+# Supabase
+SUPABASE_URL=https://your_project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
 
-# --- Choose ONE LLM Provider ---
-# Option A: Hugging Face Serverless API (100% Free with Llama 3.2 Gated Approval)
-HF_TOKEN=your_hugging_face_token
-HF_MODEL=meta-llama/Llama-3.2-3B-Instruct
+# The Brains (Groq is primary, Gemini is fallback)
+GROQ_API_KEY=gsk_your_groq_api_key
+GROQ_MODEL=llama-3.1-8b-instant
 
-# Option B: Groq Cloud API (100% Free - fast Llama 3.2)
-# GROQ_API_KEY=your_groq_api_key
-
-# Option C: Google Gemini API (100% Free - Google AI Studio)
-# GEMINI_API_KEY=your_gemini_api_key
-
-# Option D: Local Ollama (Used automatically if no API keys above are set)
-OLLAMA_URL=http://localhost:11434/api/generate
+GEMINI_API_KEY=AIzaSy_your_gemini_api_key
+GEMINI_MODEL=gemini-3.7-flash
 ```
 
-Create `.env.local` in the Next.js root folder:
-
-
+Create `.env.local` in the project root (Frontend):
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=https://your_project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-### 4. Set Up the Database
+### 4. Database Seeding
 
-Create the following tables in your Supabase project:
-
+Run the required schema setup in your Supabase SQL Editor.
 <details>
-<summary>📋 SQL Schema (click to expand)</summary>
+<summary><b>Click to expand SQL Schema</b></summary>
 
 ```sql
--- Courses table
+-- Core Tables
 CREATE TABLE courses (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id),
@@ -238,7 +200,6 @@ CREATE TABLE courses (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Chat history table
 CREATE TABLE chat_history (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   course_id UUID REFERENCES courses(id),
@@ -248,7 +209,6 @@ CREATE TABLE chat_history (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Quizzes table
 CREATE TABLE quizzes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   course_id UUID REFERENCES courses(id),
@@ -257,7 +217,6 @@ CREATE TABLE quizzes (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Progress table
 CREATE TABLE progress (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   course_id UUID REFERENCES courses(id),
@@ -267,175 +226,59 @@ CREATE TABLE progress (
   UNIQUE(course_id, user_id, lesson_id)
 );
 
--- Enable Row Level Security
+-- RLS Policies
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quizzes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE progress ENABLE ROW LEVEL SECURITY;
 ```
-
 </details>
 
-### 5. Pull the LLM Model
+### 5. Ignition 
 
-```bash
-ollama pull llama3.2:3b
-```
-
-### 6. Start the Backend
-
+**Fire up the FastAPI Backend (Terminal 1):**
 ```bash
 cd backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 7. Install Frontend Dependencies & Run
-
+**Fire up the Next.js Frontend (Terminal 2):**
 ```bash
-# From the project root
+# From project root
 npm install
 npm run dev
 ```
 
-### 8. Open the App
+🎯 **Navigate to [http://localhost:3000](http://localhost:3000) and forge your first course!**
 
-Navigate to **[http://localhost:3000](http://localhost:3000)** and start transforming PDFs into courses! 🎉
+<br/>
 
----
+## 📡 Core API Capabilities
 
-## 📡 API Reference
+EduForge is completely decoupled. Use the backend as a standalone service if you wish.
 
-All authenticated endpoints require an `Authorization: Bearer <token>` header.
+| Route | Protocol | Security | Operation |
+|:---|:---:|:---:|:---|
+| `/upload/` | `POST` | 🔒 JWT | Ingests PDF, extracts text, returns document ID |
+| `/course/{id}/generate` | `POST` | 🔒 JWT | Triggers LangGraph Agent pipeline asynchronously |
+| `/course/{id}` | `GET` | 🔒 JWT | Fetches deeply nested curriculum structure |
+| `/chat/{id}` | `POST` | 🔒 JWT | ChromaDB semantic search + LLM generation (RAG) |
+| `/quiz/generate/{id}/{ch}` | `POST` | 🔒 JWT | Generates distractors & questions dynamically |
 
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `GET` | `/` | ❌ | API welcome message & version |
-| `GET` | `/health` | ❌ | Health check |
-| `POST` | `/upload/` | ✅ | Upload PDF document (multipart/form-data) |
-| `POST` | `/course/{id}/generate` | ✅ | Trigger AI course generation |
-| `GET` | `/course/{id}` | ✅ | Get course details & structure |
-| `POST` | `/chat/{id}` | ✅ | Send message to AI tutor (RAG) |
-| `POST` | `/quiz/generate/{id}/{chapter}` | ✅ | Generate chapter quiz |
-| `PUT` | `/progress/{id}/{lesson_id}` | ✅ | Mark lesson as complete |
-| `GET` | `/progress/{id}` | ✅ | Get course progress & completion % |
-| `GET` | `/search/?q={query}` | ✅ | Search courses by title |
+<br/>
 
----
+## 🤝 Forging Ahead (Roadmap)
 
-## 📁 Project Structure
+- [ ] **Collaborative Classrooms:** Share generated courses with peers via invite links.
+- [ ] **Audio-Native Learning:** Text-to-speech integration for podcast-style learning.
+- [ ] **Spaced Repetition System (SRS):** Auto-schedules quiz reviews based on forgetting curves.
+- [ ] **EPUB/Markdown Export:** Download your generated course offline.
 
-```
-EduForge/
-├── app/                          # Next.js App Router pages
-│   ├── page.tsx                  # Landing page
-│   ├── layout.tsx                # Root layout (theme, header, fonts)
-│   ├── globals.css               # Global styles & design tokens
-│   ├── login/                    # Login page (email + Google OAuth)
-│   ├── signup/                   # Registration page
-│   ├── dashboard/                # Learning dashboard
-│   ├── upload/                   # PDF upload (drag & drop)
-│   ├── course/[id]/              # Course viewer + AI chat
-│   │   ├── page.tsx              # Interactive lesson viewer
-│   │   ├── generate/page.tsx     # Generation progress screen
-│   │   └── chat/page.tsx         # AI tutor chatbot
-│   ├── quiz/[id]/                # Chapter quiz module
-│   ├── search/                   # Course search
-│   └── profile/                  # User profile & settings
-├── components/                   # Reusable React components
-│   ├── header.tsx                # Navigation bar
-│   ├── theme-provider.tsx        # Dark/light theme wrapper
-│   └── ui/                       # Glass design system
-│       ├── glass-button.tsx      # Glassmorphism button
-│       ├── glass-card.tsx        # Frosted glass card
-│       ├── glass-chip.tsx        # Status pill / tag
-│       ├── glass-input.tsx       # Frosted input field
-│       └── button.tsx            # Base button primitive
-├── lib/                          # Utilities & clients
-│   ├── utils.ts                  # cn() class merge helper
-│   ├── supabase.ts               # Supabase client init
-│   └── apiClient.ts              # Authenticated API wrapper
-├── backend/                      # FastAPI backend
-│   ├── app/
-│   │   ├── main.py               # App entry point & router mounts
-│   │   ├── models/schemas.py     # Pydantic request/response models
-│   │   ├── routers/              # API route handlers
-│   │   │   ├── upload.py         # PDF upload endpoint
-│   │   │   ├── course.py         # Course CRUD & generation
-│   │   │   ├── chat.py           # RAG chatbot endpoint
-│   │   │   ├── quiz.py           # Quiz generation endpoint
-│   │   │   ├── progress.py       # Progress tracking
-│   │   │   └── search.py         # Course search
-│   │   ├── services/             # Business logic
-│   │   │   ├── langgraph_agent.py # 5-node course generation agent
-│   │   │   ├── llm_service.py    # Ollama LLM integration
-│   │   │   ├── pdf_service.py    # PDF text extraction
-│   │   │   ├── rag_service.py    # Vector search & embeddings
-│   │   │   └── supabase_client.py # Database client
-│   │   └── utils/auth.py         # JWT auth middleware
-│   └── test_endpoints.py         # API integration tests
-├── package.json
-├── requirements.txt
-└── README.md
-```
+<br/>
 
 ---
-
-## 🧪 Running Tests
-
-### Backend Integration Tests
-
-```bash
-cd backend
-python test_endpoints.py
-```
-
-This runs a sequential test suite covering all 8 endpoint groups with timing and detailed reporting.
-
-### Frontend Lint
-
-```bash
-npm run lint
-```
-
----
-
-## 🗺️ Roadmap
-
-- [ ] **Export courses** to PDF / EPUB
-- [ ] **Collaborative learning** — share courses with others
-- [ ] **Spaced repetition** — intelligent review scheduling
-- [ ] **Multiple file upload** — combine multiple PDFs into one course
-- [ ] **Custom LLM support** — plug in OpenAI, Anthropic, or other providers
-- [ ] **Mobile app** — React Native companion
-- [ ] **Gamification** — XP, badges, and leaderboards
-- [ ] **Analytics dashboard** — learning insights and heatmaps
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how to get started:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-Please make sure to update tests as appropriate and follow the existing code style.
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
-<p align="center">
-  <strong>Built with ❤️ by the EduForge team</strong>
-</p>
-
-<p align="center">
-  <sub>If you found this project useful, consider giving it a ⭐ on GitHub!</sub>
-</p>
+<div align="center">
+  <b>Built with passion by the EduForge team.</b><br>
+  Released under the MIT License. <br><br>
+  <i>If EduForge saved you study time, consider dropping a ⭐!</i>
+</div>
