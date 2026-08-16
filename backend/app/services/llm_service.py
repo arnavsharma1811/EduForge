@@ -6,8 +6,13 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# --- Exceptions required by chat.py ---
 class LLMServiceError(Exception):
     pass
+
+class LLMTimeoutError(LLMServiceError):
+    pass
+
 
 class LLMService:
     def __init__(self):
@@ -22,20 +27,23 @@ class LLMService:
     def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 2000) -> str:
         """Generate using Hugging Face Inference API with retries."""
         if not self.hf_token:
-            return "AI service is not configured. Please set HF_TOKEN."
+            raise LLMServiceError("HF_TOKEN not configured")
 
         for attempt in range(3):
             try:
                 return self._generate_hf(prompt, temperature, max_tokens)
+            except LLMTimeoutError:
+                # Propagate timeout errors directly
+                raise
             except Exception as e:
                 logger.error(f"HF attempt {attempt+1} failed: {e}")
                 if attempt < 2:
                     time.sleep(2 ** attempt)  # 1, 2, 4 seconds
                 else:
                     logger.error("All HF attempts failed.")
-                    return "I'm sorry, the AI service is currently unavailable. Please try again later."
+                    raise LLMServiceError(f"HF generation failed after retries: {e}")
 
-        return "AI service unavailable."
+        raise LLMServiceError("HF generation failed")
 
     def _generate_hf(self, prompt: str, temperature: float, max_tokens: int) -> str:
         url = f"https://api-inference.huggingface.co/models/{self.hf_model}"
@@ -54,7 +62,15 @@ class LLMService:
         }
 
         logger.info(f"📡 Calling HF API: {self.hf_model}")
-        response = requests.post(url, headers=headers, json=payload, timeout=60)
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
+        except requests.exceptions.Timeout:
+            logger.error("HF request timed out")
+            raise LLMTimeoutError("HF API request timed out")
+        except Exception as e:
+            logger.error(f"HF request failed: {e}")
+            raise LLMServiceError(f"HF request failed: {e}")
+
         logger.info(f"📡 HF response status: {response.status_code}")
 
         if response.status_code == 200:
