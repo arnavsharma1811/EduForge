@@ -7,6 +7,10 @@
 **The ultimate AI-native e-learning factory.**  
 *Upload a raw PDF. Get a complete, interactive, structured course in seconds.*
 
+<h3>
+  <a href="https://edu-forge-eta.vercel.app/">🔴 Try the Live Demo on Vercel</a>
+</h3>
+
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agentic_AI-1a73e8?style=for-the-badge&logo=langchain)](https://langchain.com)
