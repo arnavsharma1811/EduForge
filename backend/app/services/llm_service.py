@@ -1,7 +1,6 @@
 import os
 import requests
 import logging
-import time
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -17,31 +16,48 @@ class LLMService:
     def __init__(self):
         # --- Try Groq first ---
         self.groq_api_key = os.getenv("GROQ_API_KEY")
-        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.2-3b-preview")  # or "mixtral-8x7b-32768"
+        # llama-3.2-3b-preview was decommissioned by Groq. Use a current supported model.
+        # You can also override this with the GROQ_MODEL env var in Render.
+        self.groq_model = os.getenv("GROQ_MODEL", "llama3-8b-8192")
 
-        # --- Fallback to HF ---
+        # --- Fallback to Gemini (works on Render free tier, no outbound DNS issues) ---
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+
+        # --- Last resort: HuggingFace (NOTE: may NOT work on Render free tier due to outbound network restrictions) ---
         self.hf_token = os.getenv("HF_TOKEN")
         self.hf_model = os.getenv("HF_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
 
         if self.groq_api_key:
-            logger.info(f"✅ Using Groq with model: {self.groq_model}")
+            logger.info(f"✅ LLM Provider: Groq with model: {self.groq_model}")
+        elif self.gemini_api_key:
+            logger.info(f"✅ LLM Provider: Gemini with model: {self.gemini_model}")
         elif self.hf_token:
-            logger.warning(f"⚠️ Groq not configured, falling back to HF: {self.hf_model}")
+            logger.warning(f"⚠️  LLM Provider: HuggingFace (may fail on Render free tier): {self.hf_model}")
         else:
-            logger.error("❌ No LLM credentials configured!")
+            logger.error("❌ No LLM credentials configured! Set GROQ_API_KEY or GEMINI_API_KEY.")
 
     def generate(self, prompt: str, temperature: float = 0.3, max_tokens: int = 2000) -> str:
-        """Try Groq first, then fallback to HF."""
+        """Try Groq first, then Gemini, then HF as last resort."""
         if self.groq_api_key:
             try:
                 return self._generate_groq(prompt, temperature, max_tokens)
             except Exception as e:
-                logger.error(f"Groq failed: {e}. Falling back to HF.")
-                return self._generate_hf(prompt, temperature, max_tokens)
+                logger.error(f"Groq failed: {e}.")
+                if self.gemini_api_key:
+                    logger.info("Falling back to Gemini...")
+                    return self._generate_gemini(prompt, temperature, max_tokens)
+                elif self.hf_token:
+                    logger.warning("Falling back to HuggingFace (may fail on Render free tier)...")
+                    return self._generate_hf(prompt, temperature, max_tokens)
+                else:
+                    raise LLMServiceError(f"Groq failed and no fallback configured: {e}")
+        elif self.gemini_api_key:
+            return self._generate_gemini(prompt, temperature, max_tokens)
         elif self.hf_token:
             return self._generate_hf(prompt, temperature, max_tokens)
         else:
-            raise LLMServiceError("No LLM provider configured")
+            raise LLMServiceError("No LLM provider configured. Set GROQ_API_KEY or GEMINI_API_KEY.")
 
     def _generate_groq(self, prompt: str, temperature: float, max_tokens: int) -> str:
         url = "https://api.groq.com/openai/v1/chat/completions"
@@ -61,7 +77,39 @@ class LLMService:
         else:
             raise LLMServiceError(f"Groq API error: {response.status_code} - {response.text}")
 
+    def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        """Call Google Gemini via REST API (works on Render free tier)."""
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.gemini_model}:generateContent?key={self.gemini_api_key}"
+        )
+        payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": max_tokens,
+            },
+        }
+        try:
+            response = requests.post(url, json=payload, timeout=60)
+            if response.status_code == 200:
+                data = response.json()
+                candidates = data.get("candidates", [])
+                if candidates:
+                    parts = candidates[0].get("content", {}).get("parts", [])
+                    if parts:
+                        return parts[0].get("text", "").strip()
+                raise LLMServiceError(f"Unexpected Gemini response structure: {data}")
+            else:
+                raise LLMServiceError(f"Gemini API error: {response.status_code} - {response.text}")
+        except LLMServiceError:
+            raise
+        except Exception as e:
+            logger.error(f"Gemini request failed: {e}")
+            raise LLMServiceError(f"Gemini request failed: {e}")
+
     def _generate_hf(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        """HuggingFace Inference API - NOTE: may not work on Render free tier (outbound DNS restricted)."""
         url = f"https://api-inference.huggingface.co/models/{self.hf_model}"
         headers = {"Authorization": f"Bearer {self.hf_token}"}
         payload = {
